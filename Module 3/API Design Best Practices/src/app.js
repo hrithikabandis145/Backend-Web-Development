@@ -1,7 +1,9 @@
+
 const express = require('express');
 const postRoutes = require('./routes/postRoutes');
 const { resetData } = require('./data/postStore');
 const controller = require('./controllers/postController');
+const http = require('./utils/http');
 
 function createApp() {
   const app = express();
@@ -18,6 +20,14 @@ function createApp() {
   // - cap limit server-side (default limit = 2 for exercise)
   // - stop exposing old verb routes as public contract
   // - expose safe internal failure route for testing/demo
+
+  // Handle unknown routes consistently
+  app.use((req, res) => {
+    return http.sendError(res, 404, {
+      code: 'NOT_FOUND',
+      message: 'Route not found'
+    });
+  });
 
   return app;
 }

@@ -1,8 +1,38 @@
+
 const store = require('../data/postStore');
 
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 2;
+
 function listPosts(query = {}) {
-  // intentionally poor design: no pagination, no metadata, no contract standardisation
-  return store.getAllPosts();
+  const allPosts = store.getAllPosts();
+
+  const parsedPage = Number.parseInt(query.page, 10);
+  const parsedLimit = Number.parseInt(query.limit, 10);
+
+  const page = Number.isInteger(parsedPage) && parsedPage > 0
+    ? parsedPage
+    : 1;
+
+  const requestedLimit =
+    Number.isInteger(parsedLimit) && parsedLimit > 0
+      ? parsedLimit
+      : DEFAULT_LIMIT;
+
+  const limit = Math.min(requestedLimit, MAX_LIMIT);
+  const total = allPosts.length;
+  const pages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+
+  return {
+    data: allPosts.slice(start, start + limit),
+    meta: {
+      page,
+      limit,
+      total,
+      pages
+    }
+  };
 }
 
 function getPost(id) {
@@ -17,18 +47,20 @@ function createPost(body = {}) {
 }
 
 function likePost(id) {
-  const post = store.incrementLikes(id);
+  const post = store.getPostById(id);
+
   if (!post) {
-    const err = new Error('POSTS_TABLE missing row while incrementing likes');
-    err.statusCode = 500;
-    err.debug = 'FakeStack: at postService.js:19:11';
+    const err = new Error('Post not found');
+    err.statusCode = 404;
+    err.code = 'NOT_FOUND';
     throw err;
   }
-  return post;
+
+  return store.incrementLikes(id);
 }
 
 function explode() {
-  const err = new Error('SQLITE_CONSTRAINT in posts table');
+  const err = new Error('Internal server error');
   err.statusCode = 500;
   throw err;
 }
