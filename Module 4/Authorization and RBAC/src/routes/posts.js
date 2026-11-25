@@ -22,7 +22,7 @@ function loadOwnedOrPrivileged(req, res) {
 
   return post;
 }
-
+//completed
 // List posts — any authenticated user.
 router.get('/', (req, res) => {
   return res.status(200).json(posts);
